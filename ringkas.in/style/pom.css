@@ -1,0 +1,32 @@
+:root {
+  --bulma-danger-l: 39%;
+}
+
+.navbar {
+  --bulma-navbar-h: 213;
+  --bulma-navbar-s: 9%;
+  --bulma-navbar-box-shadow-size: 0 0.100em 0 0;
+  --bulma-navbar-box-shadow-color: hsl(238 14% 21%);
+}
+
+.box {
+  --bulma-box-background-color: hsl(205 100% 31%);
+}
+
+.table {
+  --bulma-table-cell-border-color: hsl(360 100% 100%);
+  --bulma-table-cell-border-width: 0 0 2px;
+  --bulma-table-cell-padding: 0.3em 0.65em;
+  --bulma-table-row-hover-background-color: hsla(360 100% 100% / 0.14);
+  --bulma-table-cell-heading-border-color: hsl(360 100% 100%);
+  --bulma-table-cell-heading-border-width: 0 0 2px;
+}
+
+.title {
+  --bulma-title-size: 3rem;
+}
+
+.input {
+  --bulma-input-s: 15%;
+}
+
