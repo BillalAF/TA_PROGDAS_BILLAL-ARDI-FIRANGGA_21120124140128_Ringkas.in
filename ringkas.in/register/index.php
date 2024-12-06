@@ -23,7 +23,9 @@ if (isset($_POST['register']))  {
         if (mysqli_query($connection, $sql)) {
 
             // session untuk menyimpan sesi login
-
+             $_SESSION["email"] = $email;
+             $_SESSION["name"] = $name;
+            
             header("Location: ../login");
             exit();
         } else {
