@@ -3,38 +3,82 @@
 include 'dburl.php';
 session_start();
 $login = isset($_SESSION["email"]);
-$email="";
-$name="";
+$email = "";
+$name = "";
+$shrt_url = ""; // Inisialisasi variabel
+$error_message = ""; // Inisialisasi variabel untuk pesan kesalahan
 
 if ($login) {   
     $email = $_SESSION["email"];
     $name = $_SESSION["name"];
-    
 }
 
 function generateShortCode($length = 6) {
     return substr(str_shuffle("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"), 0, $length);
 }
 
+function isValidUrl($url) {
+    // Cek format URL
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return false;
+    }
+
+    // Cek ketersediaan URL
+    $headers = @get_headers($url);
+    if ($headers && strpos($headers[0], '200') !== false) {
+        return true;
+    }
+
+    return false;
+}
+
+// shortner start
 if (isset($_POST['Generate'])) { 
     // checking login
     if (!$login){
         header('location: login/');
         exit();
     }
-    //end
+    
     $long_url = $connection->real_escape_string($_POST['url']);
     
-    $shrt_url = generateShortCode();
+    // Validasi URL
+    if (!isValidUrl($long_url)) {
+        $error_message = 'URL tidak valid atau tidak dapat diakses. Silakan coba lagi.';
+    } else {
+        do {
+            $shrt_url = generateShortCode();
+            // Check apakah kode pendek sudah ada
+            $result = $connection->query("SELECT * FROM urls WHERE shrt_url = '$shrt_url'");
+        } while ($result->num_rows > 0); // Ulangi sampai mendapatkan kode unik
 
-    // Check if URL already exists
-    $result = $connection->query("SELECT * FROM urls WHERE long_url  = '$long_url' and user_email = '$email'");
+        // Check Url apakah sudah ada
+        $result = $connection->query("SELECT * FROM urls WHERE long_url = '$long_url' and user_email = '$email'");
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $shrt_url = $row['shrt_url'];
+        } else {
+            // Pastikan $shrt_url tidak kosong sebelum menyimpan
+            if (!empty($shrt_url)) {
+                $connection->query("INSERT INTO urls (long_url, shrt_url, user_email) VALUES ('$long_url', '$shrt_url', '$email')");
+            } else {
+                $error_message = 'Gagal menghasilkan kode pendek. Silakan coba lagi.';
+            }
+        }
+    }
+  
+    // Check Url apakah sudah ada
+    $result = $connection->query("SELECT * FROM urls WHERE long_url = '$long_url' and user_email = '$email'");
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         $shrt_url = $row['shrt_url'];
-
     } else {
-        $connection->query("INSERT INTO urls (long_url, shrt_url, user_email) VALUES ('$long_url', '$shrt_url', '$email')");
+        // Pastikan $shrt_url tidak kosong sebelum menyimpan
+        if (!empty($shrt_url)) {
+            $connection->query("INSERT INTO urls (long_url, shrt_url, user_email) VALUES ('$long_url', '$shrt_url', '$email')");
+        } else {
+            $error_message = 'Gagal menghasilkan kode pendek. Silakan coba lagi.';
+        }
     }
 
     // header("location: hasil/index.php?shrt=$shrt_url");
@@ -140,40 +184,43 @@ if (isset($_POST['Generate'])) {
                                 </p>
 
                             </div>
-                        </div>
                     </form>
-                    <div class="hero-body">
+            
 
-                    </div>
                 </div>
-                <!-- link generate box end-->
-                </form>
-                <!-- rabel history -->
-                <h3>
-                    <div class="table">
-                        <table class="table is-hoverable is-size-6 is-bordered is-fullwidth" id="tabel">
-                            <thead class=" is-bordered">
-                                <tr class="is-link">
-                                    <th>Link sebelumnya</th>
-                                    <th>hasil </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php 
+
+
+                <div class="hero-body">
+                </div>
+            </div>
+            <!-- link generate box end-->
+            </form>
+            <!-- tabel history -->
+            <h3>
+                <div class="table-container">
+                    <table class="table is-hoverable is-size-6 is-bordered is-fullwidth" id="tabel">
+                        <thead class=" is-bordered">
+                            <tr class="is-link">
+                                <th>Link sebelumnya</th>
+                                <th>hasil </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
                             $query = mysqli_query($connection,"select * from urls WHERE user_email ='$email'");
                             while ($row = mysqli_fetch_assoc($query)) { ?>
-                                <tr>
-                                    <td class="is-bordered"><?php echo $row['long_url']; ?></td>
-                                    <td class="is-bordered">
-                                        <?php echo "http://localhost/ringkas.in/link?shrt=".$row['shrt_url']; ?></td>
-                                </tr>
-                                <?php } ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </h3>
-                <!-- end -->
-            </div>
+                            <tr>
+                                <td class="is-bordered"><?php echo $row['long_url']; ?></td>
+                                <td class="is-bordered">
+                                    <?php echo "http://localhost/ringkas.in/link?shrt=".$row['shrt_url']; ?></td>
+                            </tr>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </h3>
+            <!-- end -->
+        </div>
         </div>
     </section>
 
